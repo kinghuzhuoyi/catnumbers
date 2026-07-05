@@ -2,3 +2,10 @@
 mario.html
 resource-copy.html
 resource-copy-wizard.html
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example
+.env*
+!.env.example
