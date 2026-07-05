@@ -30,6 +30,7 @@
     max-width: 100vw;
     max-height: 100vh;
     box-shadow: 0 0 40px rgba(120, 120, 255, 0.2);
+    touch-action: none;
   }
   #nameInput {
     position: absolute;
@@ -185,6 +186,7 @@ const mouse = {
   inCanvas: false,
   active: false, // true when mouse should drive the cat
   lastMoveTime: 0,
+  pointerId: null,
 };
 
 function initStars() {
@@ -312,6 +314,41 @@ canvas.addEventListener('mousemove', (e) => {
 });
 canvas.addEventListener('mouseenter', () => { mouse.inCanvas = true; });
 canvas.addEventListener('mouseleave', () => { mouse.inCanvas = false; });
+
+function updatePointerControl(e) {
+  const c = toCanvasCoords(e.clientX, e.clientY);
+  mouse.x = c.x;
+  mouse.y = c.y;
+  mouse.inCanvas = true;
+  mouse.active = true;
+  mouse.lastMoveTime = performance.now();
+}
+
+canvas.addEventListener('pointerdown', (e) => {
+  if (e.pointerType !== 'touch' && e.pointerType !== 'pen') return;
+  e.preventDefault();
+  audio.ensure();
+  mouse.pointerId = e.pointerId;
+  updatePointerControl(e);
+  try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
+});
+
+canvas.addEventListener('pointermove', (e) => {
+  if (e.pointerType !== 'touch' && e.pointerType !== 'pen') return;
+  if (mouse.pointerId !== e.pointerId) return;
+  e.preventDefault();
+  updatePointerControl(e);
+});
+
+function stopPointerControl(e) {
+  if (mouse.pointerId !== e.pointerId) return;
+  mouse.pointerId = null;
+  mouse.inCanvas = false;
+  try { canvas.releasePointerCapture(e.pointerId); } catch (err) {}
+}
+
+canvas.addEventListener('pointerup', stopPointerControl);
+canvas.addEventListener('pointercancel', stopPointerControl);
 
 canvas.addEventListener('click', (e) => {
   audio.ensure();
